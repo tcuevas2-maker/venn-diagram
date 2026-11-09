@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Statistics Venn Diagram Builder | Steve's AP Stats Lab</title>
+<style>
+  :root {
+    --navy: #0C2340;
+    --gold: #FFD600;
+    --white: #FFFFFF;
+    --blue: #1d4e89;
+    --light: #f3f6fa;
+    --green: #137333;
+    --red: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--light);
+    color: var(--navy);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .app {
+    max-width: 1050px;
+    margin: auto;
+    background: var(--white);
+    min-height: 100vh;
+    box-shadow: 0 0 20px #0001;
+  }
+  .header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+  .header h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 2.2rem); }
+  .header p { margin: 4px 0 0; color: #dbe7f4; }
+  .btn {
+    border: 0;
+    border-radius: 7px;
+    padding: 11px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--gold); color: var(--navy); }
+  .btn-secondary { background: var(--navy); color: var(--white); }
+  .btn-light { background: #e7edf4; color: var(--navy); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  
+  .progress { padding: 18px 30px; border-bottom: 1px solid #d9e0e8; }
+  .steps { display: flex; justify-content: space-between; gap: 6px; }
+  .step { flex: 1; text-align: center; font-size: 0.85rem; color: #748298; }
+  .step-dot {
+    margin: 0 auto 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #d9e0e8;
+    font-weight: 700;
+  }
+  .step.active, .step.done { color: var(--navy); font-weight: 700; }
+  .step.active .step-dot { background: var(--gold); }
+  .step.done .step-dot { background: var(--navy); color: var(--white); }
+  .bar { height: 7px; background: #e5eaf0; border-radius: 9px; margin-top: 13px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--gold); transition: width 0.3s; }
+  
+  .main { padding: 30px; }
+  .card {
+    border: 1px solid #d7e0ea;
+    border-radius: 12px;
+    padding: 26px;
+    box-shadow: 0 3px 12px #0c234012;
+    margin-bottom: 22px;
+  }
+  .card h2 { margin-top: 0; font-size: 1.55rem; }
+  .card h3 { margin-top: 0; }
+  .intro { background: #eef5fb; border-left: 6px solid var(--gold); }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  label { font-weight: 700; display: block; margin-bottom: 7px; }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ccd6e2;
+    border-radius: 7px;
+    font-size: 1rem;
+    color: var(--navy);
+  }
+  input:focus { outline: 2px solid var(--gold); border-color: var(--navy); }
+  .hint { font-size: 0.9rem; color: #596a7d; margin-top: 5px; }
+  .actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .error { color: var(--red); font-weight: 700; margin-top: 12px; }
+  .gold-heading {
+    color: var(--navy);
+    background: var(--gold);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    margin: 0 0 18px;
+  }
+  .venn-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fbfcfe;
+    border: 1px solid #dce4ed;
+    border-radius: 10px;
+    padding: 15px;
+    overflow: auto;
+  }
+  .venn-wrap svg { max-width: 100%; height: auto; }
+  .venn-label { font-weight: 700; fill: var(--navy); font-size: 20px; }
+  .venn-region { font-weight: 700; fill: var(--navy); font-size: 23px; }
+  .venn-small { fill: #4f6175; font-size: 15px; }
+  .explanations {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 13px;
+    margin: 18px 0 25px;
+  }
+  .explanation { background: #f5f8fb; border-top: 5px solid var(--gold); border-radius: 8px; padding: 15px; }
+  .explanation h4 { margin: 0 0 5px; }
+  .explanation p { margin: 0; font-size: 0.94rem; }
+  .reference { margin-bottom: 25px; }
+  .question-number { color: #65768b; font-weight: 700; }
+  .question { font-size: 1.25rem; font-weight: 700; margin: 8px 0 18px; }
+  .answer-row { display: flex; gap: 10px; align-items: center; max-width: 470px; }
+  .answer-row input { flex: 1; }
+  .feedback { padding: 14px; border-radius: 8px; margin-top: 16px; font-weight: 700; }
+  .correct { background: #e8f5e9; color: var(--green); }
+  .incorrect { background: #ffebee; color: var(--red); }
+  .worked {
+    background: #fff;
+    color: var(--navy);
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 7px;
+    font-weight: 400;
+  }
+  .worked strong { color: var(--red); }
+  .worked ol { margin: 8px 0 0; padding-left: 24px; }
+  .score { font-size: 2.4rem; font-weight: 700; color: var(--navy); text-align: center; }
+  .footer { text-align: center; padding: 25px; color: #66788c; border-top: 1px solid #d7e0ea; font-size: 0.9rem; }
+  @media(max-width: 650px) {
+    .header { padding: 20px; display: block; }
+    .header .btn { margin-top: 14px; }
+    .progress, .main { padding: 20px; }
+    .step { font-size: 0.7rem; }
+    .card { padding: 19px; }
+    .answer-row { max-width: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div>
+      <h1>AP Statistics Venn Diagram Builder</h1>
+      <p>Build, interpret, and practice two-way probability models (Unit 2 CED).</p>
+    </div>
+    <button id="startOver" class="btn btn-primary" hidden>Start Over</button>
+  </header>
+
+  <section class="progress">
+    <div class="steps">
+      <div class="step" data-step="1"><div class="step-dot">1</div>Setup</div>
+      <div class="step" data-step="2"><div class="step-dot">2</div>Data Entry</div>
+      <div class="step" data-step="3"><div class="step-dot">3</div>Diagram</div>
+      <div class="step" data-step="4"><div class="step-dot">4</div>Practice</div>
+    </div>
+    <div class="bar"><div id="barFill" class="bar-fill"></div></div>
+  </section>
+
+  <main id="main" class="main"></main>
+  <footer class="footer">Steve's AP Stats Lab • AP Statistics Venn Diagram Builder</footer>
+</div>
+
+<script>
+'use strict';
+const $ = selector => document.querySelector(selector);
+
+const state = {
+  phase: 1,
+  n: null,
+  aName: 'A',
+  bName: 'B',
+  aTotal: null,
+  bTotal: null,
+  both: null,
+  aOnly: null,
+  bOnly: null,
+  neither: null,
+  question: 0,
+  score: 0,
+  answered: false
+};
+
+function formatDecimal(x) {
+  return Number(x).toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function fmt(x) {
+  return Number.isInteger(x) ? String(x) : formatDecimal(x);
+}
+
+function escapeHtml(x) {
+  return String(x).replace(/[&<>'"]/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[c]));
+}
+
+function parseProbabilityValue(raw, totalN) {
+  let s = String(raw).trim();
+  if (!s) return NaN;
+
+  if (s.includes('/')) {
+    const parts = s.split('/');
+    if (parts.length === 2) {
+      const num = Number(parts[0].trim());
+      const den = Number(parts[1].trim());
+      if (Number.isFinite(num) && Number.isFinite(den) && den !== 0) {
+        return (num / den) * totalN;
+      }
+    }
+    return NaN;
+  }
+
+  if (/%$/.test(s)) {
+    const pct = parseFloat(s);
+    return Number.isFinite(pct) ? (pct / 100) * totalN : NaN;
+  }
+
+  const val = parseFloat(s);
+  if (!Number.isFinite(val)) return NaN;
+
+  if (val >= 0 && val <= 1 && totalN > 1 && s.includes('.')) {
+    return val * totalN;
+  }
+  return val;
+}
+
+function buildQuestions() {
+  const a = state.aName;
+  const b = state.bName;
+  const intersection = `${a} ∩ ${b}`;
+
+  return [
+    {
+      text: `What is P(${a})?`,
+      type: 'number',
+      answer: () => state.aTotal / state.n,
+      explain: () => `P(${a}) = ${formatDecimal(state.aTotal / state.n)} because ${a} contains ${fmt(state.aTotal)} of the ${fmt(state.n)} total observations.`,
+      steps: () => `<ol><li>Identify total count in ${a}: ${fmt(state.aTotal)} (including overlap).</li><li>Divide by sample size n: ${fmt(state.aTotal)} ÷ ${fmt(state.n)} = ${formatDecimal(state.aTotal / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(${b})?`,
+      type: 'number',
+      answer: () => state.bTotal / state.n,
+      explain: () => `P(${b}) = ${formatDecimal(state.bTotal / state.n)} because ${b} contains ${fmt(state.bTotal)} of the ${fmt(state.n)} total observations.`,
+      steps: () => `<ol><li>Identify total count in ${b}: ${fmt(state.bTotal)} (including overlap).</li><li>Divide by sample size n: ${fmt(state.bTotal)} ÷ ${fmt(state.n)} = ${formatDecimal(state.bTotal / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(${intersection})?`,
+      type: 'number',
+      answer: () => state.both / state.n,
+      explain: () => `P(${intersection}) = ${formatDecimal(state.both / state.n)}; the intersection is the ${fmt(state.both)} observations in both sets.`,
+      steps: () => `<ol><li>Identify intersection count ("both"): ${fmt(state.both)}.</li><li>Divide by sample size n: ${fmt(state.both)} ÷ ${fmt(state.n)} = ${formatDecimal(state.both / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(${a} ∪ ${b})?`,
+      type: 'number',
+      answer: () => (state.aOnly + state.both + state.bOnly) / state.n,
+      explain: () => `P(${a} ∪ ${b}) = ${formatDecimal((state.aOnly + state.both + state.bOnly) / state.n)}; sum all regions inside either circle.`,
+      steps: () => `<ol><li>Addition Rule: P(${a} ∪ ${b}) = P(${a}) + P(${b}) − P(${a} ∩ ${b}).</li><li>Substitute: ${formatDecimal(state.aTotal / state.n)} + ${formatDecimal(state.bTotal / state.n)} − ${formatDecimal(state.both / state.n)}.</li><li>Result: ${formatDecimal((state.aOnly + state.both + state.bOnly) / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(${a}ᶜ)?`,
+      type: 'number',
+      answer: () => (state.bOnly + state.neither) / state.n,
+      explain: () => `P(${a}ᶜ) = ${formatDecimal((state.bOnly + state.neither) / state.n)}; count all outcomes outside ${a}.`,
+      steps: () => `<ol><li>Complement Rule: P(${a}ᶜ) = 1 − P(${a}).</li><li>Substitute: 1 − ${formatDecimal(state.aTotal / state.n)}.</li><li>Result: ${formatDecimal((state.bOnly + state.neither) / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(neither)?`,
+      type: 'number',
+      answer: () => state.neither / state.n,
+      explain: () => `P(neither) = ${formatDecimal(state.neither / state.n)}; region outside both ${a} and ${b}.`,
+      steps: () => `<ol><li>Identify count outside both circles: ${fmt(state.neither)}.</li><li>Divide by sample size n: ${fmt(state.neither)} ÷ ${fmt(state.n)} = ${formatDecimal(state.neither / state.n)}.</li></ol>`
+    },
+    {
+      text: `What is P(${a} | ${b})?`,
+      type: 'number',
+      answer: () => state.both / state.bTotal,
+      explain: () => `P(${a} | ${b}) = P(${intersection}) / P(${b}) = ${formatDecimal(state.both / state.bTotal)}. Restrict denominator to set ${b}.`,
+      steps: () => `<ol><li>Conditional Formula: P(${a} | ${b}) = P(${a} ∩ ${b}) / P(${b}).</li><li>P(${a} ∩ ${b}) = ${formatDecimal(state.both / state.n)}; P(${b}) = ${formatDecimal(state.bTotal / state.n)}.</li><li>Divide: ${formatDecimal(state.both / state.n)} ÷ ${formatDecimal(state.bTotal / state.n)} = ${formatDecimal(state.both / state.bTotal)}.</li></ol>`
+    },
+    {
+      text: `What is P(${b} | ${a})?`,
+      type: 'number',
+      answer: () => state.both / state.aTotal,
+      explain: () => `P(${b} | ${a}) = P(${intersection}) / P(${a}) = ${formatDecimal(state.both / state.aTotal)}. Restrict denominator to set ${a}.`,
+      steps: () => `<ol><li>Conditional Formula: P(${b} | ${a}) = P(${a} ∩ ${b}) / P(${a}).</li><li>P(${a} ∩ ${b}) = ${formatDecimal(state.both / state.n)}; P(${a}) = ${formatDecimal(state.aTotal / state.n)}.</li><li>Divide: ${formatDecimal(state.both / state.n)} ÷ ${formatDecimal(state.aTotal / state.n)} = ${formatDecimal(state.both / state.aTotal)}.</li></ol>`
+    },
+    {
+      text: `Are ${a} and ${b} mutually exclusive? Enter yes or no.`,
+      type: 'yesno',
+      answer: () => state.both === 0,
+      explain: () => state.both === 0
+        ? `Yes. Mutually exclusive events have no outcomes in common, so ${intersection} = ∅.`
+        : `No. The events overlap because P(${intersection}) ≠ 0.`,
+      steps: () => state.both === 0
+        ? `<ol><li>Mutually exclusive events require: P(${a} ∩ ${b}) = 0.</li><li>Here, P(${a} ∩ ${b}) = 0.</li><li>Therefore, ${a} and ${b} ARE mutually exclusive.</li></ol>`
+        : `<ol><li>Mutually exclusive events require: P(${a} ∩ ${b}) = 0.</li><li>Here, P(${a} ∩ ${b}) = ${formatDecimal(state.both / state.n)}, which is greater than 0.</li><li>Therefore, ${a} and ${b} are NOT mutually exclusive.</li></ol>`
+    },
+    {
+      text: `Are ${a} and ${b} independent? Enter yes or no.`,
+      type: 'yesno',
+      answer: () => Math.abs((state.both / state.n) - ((state.aTotal / state.n) * (state.bTotal / state.n))) < 1e-6,
+      explain: () => {
+        const pJoint = state.both / state.n;
+        const pProd = (state.aTotal / state.n) * (state.bTotal / state.n);
+        const isInd = Math.abs(pJoint - pProd) < 1e-6;
+        return `P(${intersection}) = ${formatDecimal(pJoint)}, while P(${a})·P(${b}) = ${formatDecimal(pProd)}. These are ${isInd ? 'equal, so they are independent.' : 'not equal, so they are not independent.'}`;
+      },
+      steps: () => {
+        const pJoint = state.both / state.n;
+        const pProd = (state.aTotal / state.n) * (state.bTotal / state.n);
+        const isInd = Math.abs(pJoint - pProd) < 1e-6;
+        return `<ol><li>Independence check: Does P(${a} ∩ ${b}) = P(${a}) × P(${b})?</li><li>P(${a} ∩ ${b}) = ${formatDecimal(pJoint)}.</li><li>P(${a}) × P(${b}) = ${formatDecimal(state.aTotal / state.n)} × ${formatDecimal(state.bTotal / state.n)} = ${formatDecimal(pProd)}.</li><li>Because ${formatDecimal(pJoint)} ${isInd ? '=' : '≠'} ${formatDecimal(pProd)}, the events ARE ${isInd ? 'independent' : 'NOT independent'}.</li></ol>`;
+      }
+    },
+    {
+      text: `What is P(${a}ᶜ | ${b})?`,
+      type: 'number',
+      answer: () => state.bOnly / state.bTotal,
+      explain: () => `P(${a}ᶜ | ${b}) = ${formatDecimal(state.bOnly / state.bTotal)}. Given set ${b}, count the portion outside set ${a}.`,
+      steps: () => `<ol><li>Given we are in ${b}, total observations = ${fmt(state.bTotal)}.</li><li>Observations in ${b} but NOT in ${a} (${b} only) = ${fmt(state.bOnly)}.</li><li>Divide: ${fmt(state.bOnly)} ÷ ${fmt(state.bTotal)} = ${formatDecimal(state.bOnly / state.bTotal)}.</li></ol>`
+    },
+    {
+      text: `What is P(${b}ᶜ | ${a})?`,
+      type: 'number',
+      answer: () => state.aOnly / state.aTotal,
+      explain: () => `P(${b}ᶜ | ${a}) = ${formatDecimal(state.aOnly / state.aTotal)}. Given set ${a}, count the portion outside set ${b}.`,
+      steps: () => `<ol><li>Given we are in ${a}, total observations = ${fmt(state.aTotal)}.</li><li>Observations in ${a} but NOT in ${b} (${a} only) = ${fmt(state.aOnly)}.</li><li>Divide: ${fmt(state.aOnly)} ÷ ${fmt(state.aTotal)} = ${formatDecimal(state.aOnly / state.aTotal)}.</li></ol>`
+    },
+    {
+      text: `What is P(${a} | ${b}ᶜ)?`,
+      type: 'number',
+      answer: () => state.aOnly / (state.aOnly + state.neither),
+      explain: () => `P(${a} | ${b}ᶜ) = ${formatDecimal(state.aOnly / (state.aOnly + state.neither))}. Restrict denominator to everything outside set ${b}.`,
+      steps: () => `<ol><li>Total observations NOT in ${b} (${b}ᶜ) = ${fmt(state.aOnly)} (${a} only) + ${fmt(state.neither)} (neither) = ${fmt(state.aOnly + state.neither)}.</li><li>Of those, the count in ${a} is ${fmt(state.aOnly)}.</li><li>Divide: ${fmt(state.aOnly)} ÷ ${fmt(state.aOnly + state.neither)} = ${formatDecimal(state.aOnly / (state.aOnly + state.neither))}.</li></ol>`
+    },
+    {
+      text: `What is P(${a}ᶜ ∩ ${b}ᶜ)?`,
+      type: 'number',
+      answer: () => state.neither / state.n,
+      explain: () => `P(${a}ᶜ ∩ ${b}ᶜ) = ${formatDecimal(state.neither / state.n)}. By De Morgan's Law, this equals P(neither).`,
+      steps: () => `<ol><li>De Morgan's Law: P(${a}ᶜ ∩ ${b}ᶜ) = P((${a} ∪ ${b})ᶜ) = 1 − P(${a} ∪ ${b}).</li><li>P(${a} ∪ ${b}) = ${formatDecimal((state.aOnly + state.both + state.bOnly) / state.n)}.</li><li>Result: 1 − ${formatDecimal((state.aOnly + state.both + state.bOnly) / state.n)} = ${formatDecimal(state.neither / state.n)}.</li></ol>`
+    }
+  ];
+}
+
+function render() {
+  updateProgress();
+  if (state.phase === 1) renderSetup();
+  if (state.phase === 2) renderData();
+  if (state.phase === 3) renderDiagram();
+  if (state.phase === 4) {
+    if (state.question < buildQuestions().length) renderPractice();
+    else renderCompletion();
+  }
+}
+
+function updateProgress() {
+  document.querySelectorAll('.step').forEach(el => {
+    let s = +el.dataset.step;
+    el.classList.toggle('active', s === state.phase);
+    el.classList.toggle('done', s < state.phase);
+  });
+  let p = state.phase === 4
+    ? 75 + (state.question / buildQuestions().length) * 25
+    : (state.phase - 1) * 25;
+  $('#barFill').style.width = p + '%';
+  $('#startOver').hidden = state.phase < 2;
+}
+
+function renderSetup() {
+  $('#main').innerHTML = `
+    <section class="card intro">
+      <h2>Let's build your Venn diagram</h2>
+      <p>Enter the total sample size n and label your two events. Useful examples: “Plays a sport” and “Has a job.”</p>
+    </section>
+    <section class="card">
+      <h2>Phase 1: Setup</h2>
+      <div class="form-grid">
+        <div><label for="n">Total sample size, n</label><input id="n" type="number" min="1" step="1" placeholder="e.g., 100"></div>
+        <div><label for="aName">Variable A name</label><input id="aName" value="A" placeholder="e.g., Plays a sport"></div>
+        <div><label for="bName">Variable B name</label><input id="bName" value="B" placeholder="e.g., Has a job"></div>
+      </div>
+      <p id="error" class="error"></p>
+      <div class="actions">
+        <span></span>
+        <button id="next" class="btn btn-primary">Continue to Data Entry</button>
+      </div>
+    </section>
+  `;
+
+  $('#next').onclick = () => {
+    let n = Number($('#n').value);
+    if (!Number.isInteger(n) || n < 1) {
+      $('#error').textContent = 'Enter a positive whole-number sample size.';
+      return;
+    }
+    state.n = n;
+    state.aName = $('#aName').value.trim() || 'A';
+    state.bName = $('#bName').value.trim() || 'B';
+    state.phase = 2;
+    render();
+  };
+}
+
+function renderData() {
+  $('#main').innerHTML = `
+    <section class="card">
+      <h2>Phase 2: Data Entry</h2>
+      <p>Enter each value as a count, percent (e.g., <b>35%</b>), decimal (e.g., <b>0.35</b>), or fraction (e.g., <b>35/100</b>).</p>
+      <div class="form-grid">
+        <div>
+          <label for="aTotal">Total in ${escapeHtml(state.aName)}, A</label>
+          <input id="aTotal" placeholder="count, %, decimal, or fraction">
+          <div class="hint">Includes the overlap.</div>
+        </div>
+        <div>
+          <label for="bTotal">Total in ${escapeHtml(state.bName)}, B</label>
+          <input id="bTotal" placeholder="count, %, decimal, or fraction">
+          <div class="hint">Includes the overlap.</div>
+        </div>
+        <div>
+          <label for="both">In both A and B</label>
+          <input id="both" placeholder="count, %, decimal, or fraction">
+          <div class="hint">The intersection.</div>
+        </div>
+      </div>
+      <p id="error" class="error"></p>
+      <div class="actions">
+        <button id="back" class="btn btn-light">Back</button>
+        <button id="next" class="btn btn-primary">Build Diagram</button>
+      </div>
+    </section>
+  `;
+
+  $('#back').onclick = () => { state.phase = 1; render(); };
+  $('#next').onclick = () => {
+    let a = parseProbabilityValue($('#aTotal').value, state.n);
+    let b = parseProbabilityValue($('#bTotal').value, state.n);
+    let both = parseProbabilityValue($('#both').value, state.n);
+    let err = '';
+
+    if ([a, b, both].some(x => !Number.isFinite(x)) || [a, b, both].some(x => x < 0) || a > state.n || b > state.n || both > a || both > b) {
+      err = 'Check your entries: use valid nonnegative values, totals cannot exceed n, and the overlap cannot exceed either total.';
+    }
+
+    let ao = a - both;
+    let bo = b - both;
+    let ne = state.n - (ao + bo + both);
+
+    if (!err && ne < -0.000001) err = 'These values make the sum of regions exceed n. Please check your entries.';
+
+    if (err) {
+      $('#error').textContent = err;
+      return;
+    }
+
+    Object.assign(state, {
+      aTotal: a,
+      bTotal: b,
+      both: both,
+      aOnly: ao,
+      bOnly: bo,
+      neither: Math.max(0, ne),
+      phase: 3
+    });
+    render();
+  };
+}
+
+function diagramBlock() {
+  let W = 700, H = 330;
+  return `
+    <div class="reference">
+      <h3 class="gold-heading">Your Venn Diagram — use this as a reference</h3>
+      <div class="venn-wrap">
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Venn diagram for ${escapeHtml(state.aName)} and ${escapeHtml(state.bName)}">
+          <rect x="5" y="5" width="690" height="320" rx="12" fill="#fff" stroke="#0C2340" stroke-width="2"/>
+          <text x="22" y="32" class="venn-label" font-style="italic">S</text>
+          <circle cx="275" cy="165" r="112" fill="#b9d7f4" fill-opacity=".72" stroke="#0C2340" stroke-width="3"/>
+          <circle cx="425" cy="165" r="112" fill="#ffe88a" fill-opacity=".72" stroke="#0C2340" stroke-width="3"/>
+          <text x="215" y="48" class="venn-label">${escapeHtml(state.aName)}</text>
+          <text x="445" y="48" class="venn-label">${escapeHtml(state.bName)}</text>
+          <text x="190" y="174" class="venn-region">${fmt(state.aOnly)}</text>
+          <text x="335" y="174" class="venn-region">${fmt(state.both)}</text>
+          <text x="480" y="174" class="venn-region">${fmt(state.bOnly)}</text>
+          <text x="350" y="292" class="venn-region">${fmt(state.neither)}</text>
+          <text x="190" y="205" class="venn-small">${escapeHtml(state.aName)} only</text>
+          <text x="320" y="205" class="venn-small">both</text>
+          <text x="468" y="205" class="venn-small">${escapeHtml(state.bName)} only</text>
+          <text x="325" y="315" class="venn-small">neither</text>
+        </svg>
+      </div>
+      <div class="explanations">
+        <div class="explanation">
+          <h4>${escapeHtml(state.aName)} only</h4>
+          <p>${fmt(state.aOnly)} observations are in ${escapeHtml(state.aName)} but not ${escapeHtml(state.bName)}.</p>
+        </div>
+        <div class="explanation">
+          <h4>Both (${escapeHtml(state.aName)} ∩ ${escapeHtml(state.bName)})</h4>
+          <p>${fmt(state.both)} observations are in both ${escapeHtml(state.aName)} and ${escapeHtml(state.bName)}.</p>
+        </div>
+        <div class="explanation">
+          <h4>${escapeHtml(state.bName)} only</h4>
+          <p>${fmt(state.bOnly)} observations are in ${escapeHtml(state.bName)} but not ${escapeHtml(state.aName)}.</p>
+        </div>
+        <div class="explanation">
+          <h4>Neither</h4>
+          <p>${fmt(state.neither)} observations are in neither event.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDiagram() {
+  $('#main').innerHTML = `
+    <section class="card">
+      <h2>Phase 3: Diagram</h2>
+      ${diagramBlock()}
+      <div class="actions">
+        <button id="back" class="btn btn-light">Back</button>
+        <button id="practice" class="btn btn-primary">Start Practice</button>
+      </div>
+    </section>
+  `;
+  $('#back').onclick = () => { state.phase = 2; render(); };
+  $('#practice').onclick = () => {
+    state.phase = 4;
+    state.question = 0;
+    state.score = 0;
+    state.answered = false;
+    render();
+  };
+}
+
+function renderPractice() {
+  let questions = buildQuestions();
+  let q = questions[state.question];
+
+  $('#main').innerHTML = `
+    ${diagramBlock()}
+    <section class="card">
+      <div class="question-number">Question ${state.question + 1} of ${questions.length}</div>
+      <div class="question">${q.text}</div>
+      <div class="answer-row">
+        <input id="answer" aria-label="Your answer" placeholder="${q.type === 'number' ? 'fraction, decimal, or percent' : 'yes or no'}">
+        <button id="check" class="btn btn-primary">Check Answer</button>
+      </div>
+      <div id="feedback" aria-live="polite"></div>
+    </section>
+  `;
+
+  $('#check').onclick = checkAnswer;
+  $('#answer').onkeydown = e => { if (e.key === 'Enter') checkAnswer(); };
+}
+
+function checkAnswer() {
+  if (state.answered) return;
+  let questions = buildQuestions();
+  let q = questions[state.question];
+  let raw = $('#answer').value.trim();
+  let ok = false;
+  let correct = q.answer();
+
+  if (q.type === 'yesno') {
+    let yes = /^(yes|y)$/i.test(raw);
+    let no = /^(no|n)$/i.test(raw);
+    ok = (yes || no) && (yes === correct);
+  } else {
+    let v = parseProbabilityValue(raw, 1);
+    ok = Number.isFinite(v) && Math.abs(v - correct) <= 0.005;
+  }
+
+  state.answered = true;
+  if (ok) state.score++;
+
+  let shown = q.type === 'yesno' ? (correct ? 'yes' : 'no') : formatDecimal(correct);
+
+  $('#feedback').innerHTML = ok
+    ? `<div class="feedback correct"><b>Correct! ✓</b><br><span>${q.explain()}</span></div>
+       <div class="actions"><span></span><button id="nextQ" class="btn btn-primary">${state.question === questions.length - 1 ? 'See Results' : 'Next Question'}</button></div>`
+    : `<div class="feedback incorrect"><b>Not quite.</b> Correct answer: <b>${shown}</b>
+       <div class="worked"><strong>Step-by-step solution:</strong>${q.steps()}</div></div>
+       <div class="actions"><span></span><button id="nextQ" class="btn btn-primary">${state.question === questions.length - 1 ? 'See Results' : 'Next Question'}</button></div>`;
+
+  $('#nextQ').onclick = () => {
+    state.question++;
+    state.answered = false;
+    render();
+  };
+}
+
+function renderCompletion() {
+  let questions = buildQuestions();
+  $('#main').innerHTML = `
+    ${diagramBlock()}
+    <section class="card">
+      <h2>Practice Complete!</h2>
+      <div class="score">${state.score} / ${questions.length}</div>
+      <p style="text-align:center">You completed all 14 probability questions. Review the diagram above or practice again to solidify Unit 2 AP Stats mastery.</p>
+      <div class="actions">
+        <button id="again" class="btn btn-primary">Practice Again</button>
+      </div>
+    </section>
+  `;
+
+  $('#again').onclick = () => {
+    state.question = 0;
+    state.score = 0;
+    state.answered = false;
+    render();
+  };
+}
+
+$('#startOver').onclick = () => {
+  Object.assign(state, {
+    phase: 1,
+    n: null,
+    aName: 'A',
+    bName: 'B',
+    aTotal: null,
+    bTotal: null,
+    both: null,
+    aOnly: null,
+    bOnly: null,
+    neither: null,
+    question: 0,
+    score: 0,
+    answered: false
+  });
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
